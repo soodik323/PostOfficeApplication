@@ -1,0 +1,64 @@
+﻿@page "/shipment/create"
+@using Microsoft.AspNetCore.Components
+@using PostOffice.Domain
+
+
+<div class="row">
+    <div class="col-lg-9">
+        <h1>Create</h1>
+    </div>
+    <div class="col-lg-3 text-right">
+        <a class="btn btn-secondary btn-sm" href="/players" role="button">Go Back To List</a>
+    </div>
+</div>
+
+
+@{
+    if(Message != null)
+        if(Message.Equals("Failed"))
+        {
+            <div class="alert alert-danger" role="alert">
+                @Message 
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-success" role="alert">
+                @Message 
+            </div>
+        }
+}
+
+
+<EditForm Model="@ShipmentModel" OnValidSubmit="@HandleValidSubmit">
+    
+    <DataAnnotationsValidator />
+    @*<ValidationSummary></ValidationSummary>*@
+
+    <div class="form-group">
+        <label>Shipment No</label>
+        <InputText class="form-control" @bind-Value="@ShipmentModel.ShipmentNumber" />
+        <ValidationMessage class="offset-sm-3 col-sm-5" For="@(() => @ShipmentModel.ShipmentNumber)" />
+    </div>
+    <div class="form-group">
+        <label>Flight Number</label>
+        <InputText class="form-control" @bind-Value="@ShipmentModel.FlightNumber"/>
+        <ValidationMessage class="offset-sm-3 col-sm-5" For="@(() => @ShipmentModel.FlightNumber)" />
+    </div>
+    <div class="form-group">
+        <label>Flight Date</label>
+        <InputDate class="form-control" @bind-Value="@ShipmentModel.FlightDate"/>
+        <ValidationMessage class="offset-sm-3 col-sm-5" For="@(() => @ShipmentModel.FlightDate)" />
+    </div>
+    <div class="form-group">
+        <label>Position</label>
+        <InputSelect @bind-Value="@ShipmentModel.Airport" class="form-control">
+            @foreach (var airport in Enum.GetValues(typeof(Airport)))
+            {
+                <option value="@airport">@airport</option>
+            }
+        </InputSelect>
+        <ValidationMessage class="offset-sm-3 col-sm-5" For="@(() => @ShipmentModel.Airport)" />
+    </div>
+    <button type="submit" class="btn btn-primary">Create</button>
+</EditForm>

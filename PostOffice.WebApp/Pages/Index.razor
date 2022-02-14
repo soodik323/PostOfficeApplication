@@ -1,0 +1,142 @@
+﻿@page "/"
+@using PostOffice.Application.Dtos
+@using PostOffice.Domain
+@using PostOffice.WebApp.Contracts
+@using PostOffice.WebApp.Models
+@using PostOffice.WebApp.Services.Base
+
+@inject HttpClient _http
+@inject IShipmentDataService _shipmentDataService
+
+<div class="row">
+    <div class="col-lg-9">
+        <h1>Shipments</h1>
+    </div>
+    <div class="col-lg-3 text-right">
+        <a class="btn btn-success btn-sm" href="/shipment/create" role="button">Create New</a>
+    </div>
+</div>
+
+@if (_shipments == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table table-bordered table-striped table-sm">
+        <thead>
+            <tr>
+                <th>Flight Number</th>
+                <th>Airport</th>
+                <th>Shipment Number</th>
+                <th>FlightDate</th>
+                <th>Finalized</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var shipment in _shipments)
+            {
+                <tr>
+                    <td>@shipment.FlightNumber</td>
+                    <td>@shipment.Airport.ToString()</td>
+                    <td>@shipment.ShipmentNumber</td>
+                    <td>@shipment.FlightDate</td>
+                    @if (shipment.IsFinalized)
+                    {
+                        <td>Finalized</td>
+                    }
+                    else
+                    {
+                        <td>Not Finalized</td>
+                    }
+
+                    <td class="text-right">
+                        @if (!shipment.IsFinalized)
+                        {<input type="button" class="btn btn-primary btn-sm" @onclick="() => FinalizeShipment(shipment)" value="Finalize Shipment" />
+                        }
+
+                    </td>
+                    <td class="text-right">
+                        <a class="btn btn-primary btn-sm" href="/bag/details/@shipment.Id" role="button">Details</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ShipmentModel> _shipments;
+    public string Message { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = (await _shipmentDataService.GetShipments()).ToList()
+        .Select(p => new ShipmentModel()
+        {
+            Id = p.Id,
+            ShipmentNumber = p.ShipmentNumber,
+            Airport = p.Airport,
+            FlightNumber = p.FlightNumber,
+            FlightDate = p.FlightDate,
+            IsFinalized = p.IsFinalized,
+            Bags = p.Bags.Where(x => x.BagType == BagType.Letter).Select(x => new LetterBagModel()
+            {
+                BagNumber = x.BagNumber,
+                BagType = x.BagType,
+                Price = x.Price,
+                Weight = x.Weight,
+                ItemCount = x.ItemCount
+
+            }).ToList()
+                .Union(p.Bags.Where(x => x.BagType == BagType.Parcel).Select(x => new ParcelBagModel()
+                {
+                    BagNumber = x.BagNumber,
+                    BagType = x.BagType,
+                    ItemCount = x.Parcels.Count(),
+                    Price = x.Parcels.Sum(s1 => s1.Price),
+                    Weight = x.Parcels.Sum(s1 => s1.Weight),
+                    Parcels = x.Parcels.Select(x1 => new ParcelDto()
+                    {
+                        Id = x1.Id,
+                        BagId = x1.BagId,
+                        ParcelNumber = x1.ParcelNumber,
+                        DestinationCountry = x1.DestinationCountry,
+                        RecipientName = x1.RecipientName,
+                        Price = x1.Price,
+                        Weight = x1.Weight
+                    }).ToList()
+
+                }).Cast<BaseBag>()).ToList()
+        }).ToList();
+
+        _shipments = result;
+
+
+    }
+
+    protected async void FinalizeShipment(ShipmentModel shipment)
+    {
+        shipment.IsFinalized = true;
+        var response = await _shipmentDataService.FinalizeShipment(shipment);
+        HandleResponse(response);
+
+    }
+    private void HandleResponse(ApiResponse<ShipmentDto> response)
+    {
+        if (!response.Success)
+        {
+            Message = "Failed";
+        }
+
+        // Note that the following line is necessary because otherwise
+        // Blazor would not recognize the state change and refresh the UI
+        InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+}

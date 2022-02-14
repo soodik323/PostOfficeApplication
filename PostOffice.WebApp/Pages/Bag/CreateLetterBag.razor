@@ -1,0 +1,58 @@
+﻿@page "/bag/createletterbag/{id:int}"
+@using PostOffice.Domain
+@using System.ComponentModel.Design
+
+<div class="row">
+    <div class="col-lg-9">
+        <h1>Create</h1>
+    </div>
+    <div class="col-lg-3 text-right">
+        <input type="button" class="btn btn-secondary btn-sm" @onclick="@NavigateToList" value="Go Back To List" />
+    </div>
+</div>
+
+
+@{
+    if(Message != null)
+        if(Message.Equals("Failed"))
+        {
+            <div class="alert alert-danger" role="alert">
+                @Message 
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-success" role="alert">
+                @Message 
+            </div>
+        }
+}
+
+
+<EditForm Model="@Bag" OnValidSubmit="@HandleValidSubmit">
+
+    <DataAnnotationsValidator />
+    @*<ValidationSummary></ValidationSummary>*@
+
+    <div class="form-group">
+        <label>Bag Number</label>
+        <InputText class="form-control" @bind-Value="@Bag.BagNumber" />
+        <ValidationMessage class="offset-sm-3 col-sm-5" For="@(() => @Bag.BagNumber)" />
+    </div>
+    <div class="form-group">
+        <label>Items</label>
+        <InputNumber class="form-control" @bind-Value="@Bag.ItemCount" />
+        <ValidationMessage class="offset-sm-3 col-sm-5" For="@(() => @Bag.ItemCount)" />
+    </div>
+    <div class="form-group">
+        <label>Price</label>
+        <InputNumber class="form-control" @bind-Value="@Bag.Price" />
+        <ValidationMessage class="offset-sm-3 col-sm-5" For="@(() => @Bag.Price)" />
+    </div>
+    <div class="form-group">
+        <label>Weight</label>
+        <InputNumber class="form-control" @bind-Value="@Bag.Weight" />
+        <ValidationMessage class="offset-sm-3 col-sm-5" For="@(() => @Bag.Weight)" />
+    </div>
+    <button type="submit" class="btn btn-primary">Create</button>
+</EditForm>
